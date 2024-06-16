@@ -1,0 +1,33 @@
+<p>
+    Tela de Login
+</p>
+
+<form [formGroup]="myForm" (ngSubmit)="onSubmit()">
+    <table>
+        <tr>
+            <td>
+                Usuário
+            </td>
+            <td>
+                <input id="username" type="text"  formControlName="username">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Senha
+            </td>
+            <td>
+                <input id="password" type="password" formControlName="password">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <button type="submit">Submit</button>
+            </td>
+        </tr>
+    </table>
+</form>
+
+<div *ngIf="resultadoLogin$ | async">
+    Login efetuado com sucesso!
+</div>
