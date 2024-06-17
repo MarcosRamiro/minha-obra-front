@@ -2,6 +2,10 @@
     Tela de Login
 </p>
 
+<div *ngIf="isLogado$ | async as resultado ">
+    Usuário já está logado. {{ resultado }}
+</div>
+
 <form [formGroup]="myForm" (ngSubmit)="onSubmit()">
     <table>
         <tr>
