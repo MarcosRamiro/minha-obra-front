@@ -26,7 +26,7 @@ export class LoginService {
     this.consultarStatusLogin();
   }
 
-  private localStorageHelper = inject(LocalStorageHelperService)
+  private _localStorageHelper = inject(LocalStorageHelperService)
 
   private _efetuarLoginAction = new BehaviorSubject<CredencialRequest>({username: '', password: ''});
   private _consultarEstadoLoginAction = new  BehaviorSubject<boolean>(true);
@@ -50,7 +50,7 @@ export class LoginService {
   estadoAtualLogin$ = this._consultarEstadoLoginAction
             .pipe(
               switchMap(() => {
-                const token = this.localStorageHelper.getItem('token')
+                const token = this._localStorageHelper.getItem('token')
                 if (token){
                   return of({
                     estado: Estado.Logado,
@@ -85,11 +85,13 @@ export class LoginService {
       }
     ]
 
+    this._localStorageHelper.removeItem('token');
+
     const result = usuarios.some(item => item.username === credencial.username && item.password === credencial.password)
     console.log(`Olá, aqui o resultado ${result}.`)
     
     if (result){
-      this.localStorageHelper.setItem('token', 'eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6Im1hcmNvcyIsImV4cCI6MTc1MDExNzk0MSwiaWF0IjoxNzE4NTgxOTQxfQ.sMHbcUdISAmomsmBr3LZP8gCyGzlVnT2hhC7Za-U2dM')
+      this._localStorageHelper.setItem('token', 'eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6Im1hcmNvcyIsImV4cCI6MTc1MDExNzk0MSwiaWF0IjoxNzE4NTgxOTQxfQ.sMHbcUdISAmomsmBr3LZP8gCyGzlVnT2hhC7Za-U2dM')
       return of({
         estado: Estado.Logado,
         token: 'xpto'
