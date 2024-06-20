@@ -2,36 +2,44 @@
     Tela de Login
 </p>
 
-<div *ngIf="isLogado$ | async as resultado ">
-    Usuário já está logado. {{ resultado }}
+<div>
+    {{ mensagemLogadoNaoLogado() }}
 </div>
 
-<form [formGroup]="myForm" (ngSubmit)="onSubmit()">
-    <table>
-        <tr>
-            <td>
-                Usuário
-            </td>
-            <td>
-                <input id="username" type="text"  formControlName="username">
-            </td>
-        </tr>
-        <tr>
-            <td>
-                Senha
-            </td>
-            <td>
-                <input id="password" type="password" formControlName="password">
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <button type="submit">Submit</button>
-            </td>
-        </tr>
-    </table>
-</form>
+@if (!isLogado()) {
+    <form [formGroup]="myForm" (ngSubmit)="onSubmit()">
+        <table>
+            <tr>
+                <td>
+                    Usuário
+                </td>
+                <td>
+                    <input id="username" type="text"  formControlName="username">
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Senha
+                </td>
+                <td>
+                    <input id="password" type="password" formControlName="password">
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <button type="submit">Submit</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+} @else {
+    <div>
+        <button (click)="deslogar()" >Deslogar</button>
+    </div>
+}
 
-<div *ngIf="resultadoLogin$ | async">
+
+
+<div *ngIf="resultadoLogin()">
     Login efetuado com sucesso!
 </div>

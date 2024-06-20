@@ -1,6 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Signal, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subject, catchError, concatMap, delay, filter, map, merge, of, switchMap, tap, timer } from 'rxjs';
 import { LocalStorageHelperService } from '../shared/local-storage-helper.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 export interface CredencialRequest {
   username: string,
@@ -23,7 +24,7 @@ export interface EstadoLogin {
 export class LoginService {
 
   constructor() {
-    this.consultarStatusLogin();
+    //this.consultarStatusLogin();
   }
 
   private _localStorageHelper = inject(LocalStorageHelperService)
@@ -42,12 +43,12 @@ export class LoginService {
     })
   );
 
-  resultadoLogin$: Observable<boolean> = this._resultadoValidacaoCredencial$.pipe(
+  resultadoLogin: Signal<boolean> = toSignal(this._resultadoValidacaoCredencial$.pipe(
     map(val => val.estado === Estado.Logado),
     tap(_ => this.consultarStatusLogin()),
-  );
+  ),  { initialValue: false});
 
-  estadoAtualLogin$ = this._consultarEstadoLoginAction
+  private estadoAtualLogin$ = this._consultarEstadoLoginAction
             .pipe(
               switchMap(() => {
                 const token = this._localStorageHelper.getItem('token')
@@ -64,9 +65,10 @@ export class LoginService {
               })
             );
 
-  isLogado$: Observable<boolean> = this.estadoAtualLogin$.pipe (
+  isLogado: Signal<boolean> = toSignal(this.estadoAtualLogin$.pipe(
     map(val => val.estado === Estado.Logado),
-  );          
+    tap(console.log)
+  ),  { initialValue: false});         
 
   public efetuarLogin(credencial: CredencialRequest){
     this._efetuarLoginAction.next(credencial);
@@ -85,7 +87,7 @@ export class LoginService {
       }
     ]
 
-    this._localStorageHelper.removeItem('token');
+    this.limparDadosDeLogin();
 
     const result = usuarios.some(item => item.username === credencial.username && item.password === credencial.password)
     console.log(`Olá, aqui o resultado ${result}.`)
@@ -101,5 +103,14 @@ export class LoginService {
       estado: Estado.Nao_Logado
     })
 
+  }
+
+  deslogar(){
+    this.limparDadosDeLogin();
+    this.consultarStatusLogin();
+  }
+
+  private limparDadosDeLogin(){
+    this._localStorageHelper.removeItem('token');
   }
 }
