@@ -1,85 +1,105 @@
-import { Injectable, Signal, inject } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, catchError, concatMap, delay, filter, map, merge, of, switchMap, tap, timer } from 'rxjs';
+import { Injectable,  computed, inject, signal } from '@angular/core';
+import { BehaviorSubject, Observable, catchError, delay, filter, map, of, switchMap, tap } from 'rxjs';
 import { LocalStorageHelperService } from '../shared/local-storage-helper.service';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { CredencialRequest, Estado, Usuario } from '../shared/interfaces';
 
-export interface CredencialRequest {
-  username: string,
-  password: string
-}
-
-export enum Estado {
-  Logado = 'Logado',
-  Nao_Logado = 'Não Logado'
-}
-
-export interface EstadoLogin {
-  estado: Estado,
-  token?: string
-}
 
 @Injectable({
   providedIn: 'root'
 })
 export class LoginService {
 
-  constructor() {
-    //this.consultarStatusLogin();
-  }
-
   private _localStorageHelper = inject(LocalStorageHelperService)
 
   private _efetuarLoginAction = new BehaviorSubject<CredencialRequest>({username: '', password: ''});
   private _consultarEstadoLoginAction = new  BehaviorSubject<boolean>(true);
 
-  private _resultadoValidacaoCredencial$: Observable<EstadoLogin> = this._efetuarLoginAction.pipe(
-    filter(c => c.username !== '' && c.password !== ''),
-    concatMap(
-      this.validarCredenciais.bind(this)
-    ), 
-    catchError(err => {
-      console.error(`Ocorreu um erro: ${err}`)
-      return of({estado: Estado.Nao_Logado})
-    })
-  );
+  private state = signal<Estado>( {
+    isLogado: false,
+    isLoading: false,
+    usuario: undefined,
+    dataLogin: undefined,
+    dataExpiracao: undefined
 
-  resultadoLogin: Signal<boolean> = toSignal(this._resultadoValidacaoCredencial$.pipe(
-    map(val => val.estado === Estado.Logado),
-    tap(_ => this.consultarStatusLogin()),
-  ),  { initialValue: false});
+  });
 
-  private estadoAtualLogin$ = this._consultarEstadoLoginAction
-            .pipe(
-              switchMap(() => {
-                const token = this._localStorageHelper.getItem('token')
-                if (token){
-                  return of({
-                    estado: Estado.Logado,
-                    token: token
-                  })
-                }
-                
-                return of({
-                  estado: Estado.Nao_Logado
-                })
-              })
-            );
+  isLogado = computed(() => this.state().isLogado)
+  isLoading = computed(() => this.state().isLoading)
+  usuario = computed(() => this.state().usuario)
+  dataLogin = computed(() => this.state().dataLogin)
+  dataExpiracao = computed(() => this.state().dataExpiracao)
+  
+  constructor (){
+    this._efetuarLoginAction.pipe(
+      filter(c => c.username !== '' && c.password !== ''),
+      tap(_ => this.setLoading(true)),
+      switchMap(this.validarCredenciais.bind(this)), 
+      catchError(err => {
+        console.error(`Ocorreu um erro: ${err}`)
+        return of({
+          isLogado: false,
+          isLoading: false,
+          usuario: undefined,
+          dataLogin: undefined,
+          dataExpiracao: undefined
+        })
+      }),
+      delay(1000),
+      tap(resultado => this.setStateLoging(resultado.isLogado)),
+      tap(resultado => this.setUsuario(resultado.usuario)),
+      tap(_ => this.setLoading(false)),
+      takeUntilDestroyed(),
+    ).subscribe(val => console.log(`_resultadoValidacaoCredencial: ${JSON.stringify(val)}`))
 
-  isLogado: Signal<boolean> = toSignal(this.estadoAtualLogin$.pipe(
-    map(val => val.estado === Estado.Logado),
-    tap(console.log)
-  ),  { initialValue: false});         
+    this._consultarEstadoLoginAction
+      .pipe(
+        tap(_ => this.setLoading(true)),
+        map(_ => this._localStorageHelper.getItem('token')),
+        delay(400),
+        tap(token => {
+            this.setStateLoging(!!token);
+            this.setUsuario(token ? { nome: 'Marcos'} : undefined)
+        }),
+        tap(_ => this.setLoading(false)),
+        filter(token => !!token),
+        takeUntilDestroyed()
+      ).subscribe(val => console.log(`_consultarEstadoLoginAction: ${val}`))
+  }
 
+  private setStateLoging(isLogado: boolean){
+    this.state.update(state => ({
+      ...state,
+      isLogado: isLogado
+    }));
+  }
+
+  private setLoading(isLoading: boolean){
+    this.state.update(state => ({
+      ...state,
+      isLoading: isLoading
+    }));
+  }
+
+  private setUsuario(usuario: Usuario | undefined){
+    if (usuario){
+      this.state.update(state => ({
+        ...state,
+        usuario: usuario
+      }));
+    }
+  }
+  
   public efetuarLogin(credencial: CredencialRequest){
     this._efetuarLoginAction.next(credencial);
   }
 
   public consultarStatusLogin(){
-    //console.log('chamou o consultar estatus')
+    console.log('chamou o consultar estatus')
     this._consultarEstadoLoginAction.next(true);
   }
 
-  private validarCredenciais(credencial: CredencialRequest): Observable<EstadoLogin> {
+  private validarCredenciais(credencial: CredencialRequest): Observable<Estado> {
     const usuarios: CredencialRequest[] =  [
       {
         username: 'marcos',
@@ -90,17 +110,27 @@ export class LoginService {
     this.limparDadosDeLogin();
 
     const result = usuarios.some(item => item.username === credencial.username && item.password === credencial.password)
-    console.log(`Olá, aqui o resultado ${result}.`)
+    
+    let token_value = 'eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJleHAiOjE3NTA0NjQ3MjMsInVzZXIiOiJtYXJjb3MiLCJpYXQiOjE3MTg5Mjg3MjN9.dsvGSHZUJG2Ae609ecapfru04m85nFmSmPD7DY-W7JE';
     
     if (result){
-      this._localStorageHelper.setItem('token', 'eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJJc3N1ZXIiOiJJc3N1ZXIiLCJVc2VybmFtZSI6Im1hcmNvcyIsImV4cCI6MTc1MDExNzk0MSwiaWF0IjoxNzE4NTgxOTQxfQ.sMHbcUdISAmomsmBr3LZP8gCyGzlVnT2hhC7Za-U2dM')
+      this._localStorageHelper.setItem('token', token_value)
       return of({
-        estado: Estado.Logado,
-        token: 'xpto'
+        isLogado: true,
+        isLoading: false,
+        usuario: {
+          nome: 'Marcos'
+        },
+        dataLogin: new Date(),
+        dataExpiracao: new Date()
       })
     }
     return of({
-      estado: Estado.Nao_Logado
+      isLoading: false,
+      isLogado: false,
+      usuario: undefined,
+      dataLogin: undefined,
+      dataExpiracao: undefined
     })
 
   }

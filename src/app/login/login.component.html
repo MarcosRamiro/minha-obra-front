@@ -34,12 +34,7 @@
     </form>
 } @else {
     <div>
-        <button (click)="deslogar()" >Deslogar</button>
+        <button (click)="deslogar()" >Sair</button>
     </div>
 }
-
-
-
-<div *ngIf="resultadoLogin()">
-    Login efetuado com sucesso!
-</div>
+<div *ngIf="idLoading() === true">carregando...</div>

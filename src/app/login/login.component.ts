@@ -3,7 +3,8 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { map } from 'rxjs';
 
-import { CredencialRequest, LoginService } from './login.service';
+import {  LoginService } from './login.service';
+import { CredencialRequest } from '../shared/interfaces';
 
 @Component({
   selector: 'app-login',
@@ -17,12 +18,13 @@ export class LoginComponent implements OnInit  {
   private loginService = inject(LoginService);
   myForm: FormGroup;
 
-  resultadoLogin = this.loginService.resultadoLogin
   isLogado = this.loginService.isLogado
+  idLoading = this.loginService.isLoading
+  usuario = this.loginService.usuario
   mensagemLogadoNaoLogado = computed(
     () => {
       if (this.isLogado()){
-        return "Usuário já está logado."
+        return `Olá, ${this.usuario()?.nome}, seja bem-vindo!`
       } else {
         return "Usuário não logado."
       }
