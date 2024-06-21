@@ -1,1 +1,7 @@
-<p>Home!!</p>
+<p>Aqui é a sua home</p>
+
+<div *ngIf="isLogado()">
+    Olá, {{ usuario()?.nome }}.
+</div>
+
+<div *ngIf="isLoading()">carregando...</div>
