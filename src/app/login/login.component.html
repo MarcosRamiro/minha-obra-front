@@ -37,4 +37,6 @@
         <button (click)="deslogar()" >Sair</button>
     </div>
 }
-<div *ngIf="idLoading() === true">carregando...</div>
+<div *ngIf="idLoading()">carregando...</div>
+
+<div *ngIf="hasErroDeLogin()">ops, usuário e/ou senha inválido...</div>

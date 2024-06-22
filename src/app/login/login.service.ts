@@ -44,17 +44,20 @@ export class LoginService {
   usuario = computed(() => this.state().usuario)
   dataLogin = computed(() => this.state().dataLogin)
   dataExpiracao = computed(() => this.state().dataExpiracao)
+  hasErroDeLogin = signal<boolean>(false)
 
   constructor (){
     this._efetuarLoginAction.pipe(
       tap(() => console.log('iniciou validacao de credenciais')),
       filter(c => c.username !== '' && c.password !== ''),
       tap(_ => this.setLoading(true)),
+      tap(_ => this.setErroDeLogin(false)),
       switchMap((credencial) => this.validarCredenciais(credencial)),
       delay(1000),
       tap(estado => this.setStateLoging(estado.isLogado)),
       tap(estado => this.setUsuario(estado.usuario)),
       tap(_ => this.setLoading(false)),
+      tap(estado => this.setErroDeLogin(estado.isLogado === false)),
       catchError(err => {
         console.log(`Ocorreu um erro, e vai parar de atualizar o login: ${err}`)
         return of({
@@ -80,6 +83,10 @@ export class LoginService {
         filter(estado => estado.isLogado),
         takeUntilDestroyed()
       ).subscribe(val => console.log(`_consultarEstadoLoginAction: ${JSON.stringify(val)}`))
+  }
+
+  private setErroDeLogin(isErroLogin: boolean){
+    this.hasErroDeLogin.set(isErroLogin)
   }
 
   private setStateLoging(isLogado: boolean){
@@ -119,7 +126,7 @@ export class LoginService {
     this.limparDadosDeLogin();
 
     return this.callApiValidate(credencial).pipe(
-              map(res => this.tratarRetornoApiValidate(res)),
+              switchMap(res => this.tratarRetornoApiValidate(res)),
               catchError(err => {
                 console.log(`ops, ${err}`)
                 return of({

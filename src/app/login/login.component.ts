@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, effect, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { map } from 'rxjs';
@@ -21,6 +21,8 @@ export class LoginComponent implements OnInit  {
   isLogado = this.loginService.isLogado
   idLoading = this.loginService.isLoading
   usuario = this.loginService.usuario
+  hasErroDeLogin = this.loginService.hasErroDeLogin
+     
   mensagemLogadoNaoLogado = computed(
     () => {
       if (this.isLogado()){
@@ -30,8 +32,10 @@ export class LoginComponent implements OnInit  {
       }
     }
   );
+
     
   constructor(){
+
     this.myForm = new FormGroup({
       username: new FormControl(''),
       password: new FormControl('')
@@ -52,6 +56,10 @@ export class LoginComponent implements OnInit  {
 
   deslogar(){
    console.log("deslogar");
+   this.myForm = new FormGroup({
+    username: new FormControl(''),
+    password: new FormControl('')
+    });
    this.loginService.deslogar(); 
   }
 
