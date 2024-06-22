@@ -8,6 +8,7 @@ export interface Estado {
 
 export interface Usuario {
     nome: string,
+    email?: string
 
 }
 
@@ -25,5 +26,5 @@ export interface Token {
 
 export interface ResponseApiCredencials {
   status: boolean,
-  token?: string
+  token: string
 }
