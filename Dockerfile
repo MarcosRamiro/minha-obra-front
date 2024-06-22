@@ -10,14 +10,12 @@ COPY . .
 
 RUN npm run build
 
-FROM httpd:latest
+FROM nginx:latest
 
 ARG DEPENDENCY=/workspace/app/dist/minha-obra-front/browser
 
-WORKDIR /app
+COPY --from=build ${DEPENDENCY}/** /usr/share/nginx/html/
 
-COPY --from=build ${DEPENDENCY}/** /usr/local/apache2/htdocs/
+COPY ./nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
-
-CMD ["httpd-foreground"]
