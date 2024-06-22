@@ -1,8 +1,10 @@
 import { Injectable,  computed, inject, signal } from '@angular/core';
 import { BehaviorSubject, Observable, catchError, delay, filter, map, of, switchMap, tap } from 'rxjs';
-import { LocalStorageHelperService } from '../shared/local-storage-helper.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CredencialRequest, Estado, Usuario } from '../shared/interfaces';
+
+import { LocalStorageHelperService } from '../shared/local-storage-helper.service';
+import { CredencialRequest, Estado, ResponseApiCredencials, Usuario } from '../shared/interfaces';
+import { JWTTokenService } from './JWTToken.service';
 
 
 @Injectable({
@@ -11,6 +13,7 @@ import { CredencialRequest, Estado, Usuario } from '../shared/interfaces';
 export class LoginService {
 
   private _localStorageHelper = inject(LocalStorageHelperService)
+  private jwtService = inject(JWTTokenService)
 
   private _efetuarLoginAction = new BehaviorSubject<CredencialRequest>({username: '', password: ''});
   private _consultarEstadoLoginAction = new  BehaviorSubject<boolean>(true);
@@ -29,12 +32,12 @@ export class LoginService {
   usuario = computed(() => this.state().usuario)
   dataLogin = computed(() => this.state().dataLogin)
   dataExpiracao = computed(() => this.state().dataExpiracao)
-  
+
   constructor (){
     this._efetuarLoginAction.pipe(
       filter(c => c.username !== '' && c.password !== ''),
       tap(_ => this.setLoading(true)),
-      switchMap(this.validarCredenciais.bind(this)), 
+      switchMap(this.validarCredenciais.bind(this)),
       catchError(err => {
         console.error(`Ocorreu um erro: ${err}`)
         return of({
@@ -89,7 +92,7 @@ export class LoginService {
       }));
     }
   }
-  
+
   public efetuarLogin(credencial: CredencialRequest){
     this._efetuarLoginAction.next(credencial);
   }
@@ -100,6 +103,45 @@ export class LoginService {
   }
 
   private validarCredenciais(credencial: CredencialRequest): Observable<Estado> {
+
+    this.limparDadosDeLogin();
+
+    return this.callApiValidate(credencial).pipe(
+              tap(res => {
+                if (res.status){
+                  this._localStorageHelper.setItem('token', res.token)
+                }
+              }),
+              map(this.tratarRetornoApiValidate)
+            );
+  }
+
+  private tratarRetornoApiValidate({status, token }: ResponseApiCredencials): Estado {
+    if (status){
+
+      //this.jwtService.setToken(token+'');
+
+      //console.log(this.jwtService.getDecodeToken());
+
+      return {
+        isLogado: true,
+        isLoading: false,
+        usuario: {
+          nome: `Marcos`
+        },
+        dataLogin: new Date(),
+        dataExpiracao: new Date()
+      }
+    } else {
+      return {
+        isLogado: false,
+        isLoading: false
+      }
+
+    }
+  }
+
+  private callApiValidate(credencial: CredencialRequest): Observable<ResponseApiCredencials>{
     const usuarios: CredencialRequest[] =  [
       {
         username: 'marcos',
@@ -107,31 +149,15 @@ export class LoginService {
       }
     ]
 
-    this.limparDadosDeLogin();
+    let token_value = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiIsImtpZCI6ImRlMDgwNTRjYjc5MzUzYWZkNzY2ZGQ2MzViNmZlM2QwIn0.eyJzdWIiOiJtYXJjb3NyYW1pcm8iLCJleHAiOjE3NTA1NzEwNzAsImlhdCI6MTcxOTAyNDA0NiwiZGlzcGxheW5hbWUiOiJNYXJjb3MgUmFtaXJvIiwiZW1haWwiOiJtYXJjb3NAZW1haWwuY29tIn0.54TFdh504rbWCbXQDewBNO3WmEcdEShan4Q8uRiMPaduFhx9zi8aOhcVdJwRyYksPNCd9lEuhlCrgpDJbSG7Ww';
 
     const result = usuarios.some(item => item.username === credencial.username && item.password === credencial.password)
-    
-    let token_value = 'eyJhbGciOiJIUzI1NiJ9.eyJSb2xlIjoiQWRtaW4iLCJleHAiOjE3NTA0NjQ3MjMsInVzZXIiOiJtYXJjb3MiLCJpYXQiOjE3MTg5Mjg3MjN9.dsvGSHZUJG2Ae609ecapfru04m85nFmSmPD7DY-W7JE';
-    
-    if (result){
-      this._localStorageHelper.setItem('token', token_value)
-      return of({
-        isLogado: true,
-        isLoading: false,
-        usuario: {
-          nome: 'Marcos'
-        },
-        dataLogin: new Date(),
-        dataExpiracao: new Date()
-      })
+
+    if(result) {
+      return of({ status: true, token: token_value })
     }
-    return of({
-      isLoading: false,
-      isLogado: false,
-      usuario: undefined,
-      dataLogin: undefined,
-      dataExpiracao: undefined
-    })
+
+    return of({status: false})
 
   }
 
