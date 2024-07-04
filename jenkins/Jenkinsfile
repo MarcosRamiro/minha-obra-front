@@ -2,9 +2,10 @@ pipeline {
     agent any
 
     stages {
-        stage('Git Checkout') {
+
+        stage('Install Dependencies'){
             steps {
-                git 'https://github.com/MarcosRamiro/minha-obra-front.git'
+                sh 'npm ci' 
             }
         }
 
