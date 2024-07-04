@@ -2,15 +2,11 @@ pipeline {
     agent any
     stages {
         stage('Test') {
-            agent {
+            steps {
                 sh '''
                 docker -v
                 docker info
                 '''
-            }
-
-            steps {
-                sh 'node --version'
             }
         }
     }
