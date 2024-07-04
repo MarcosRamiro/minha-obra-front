@@ -1,0 +1,19 @@
+pipelie {
+    agent any
+
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git 'https://github.com/MarcosRamiro/minha-obra-front.git'
+            }
+        }
+
+        stage('Install Dependencies'){
+            steps {
+                sh 'npm ci' 
+            }
+        }
+
+    }
+
+}
