@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent none
 
     environment { 
         SERVER_TO_DEPLOY = 'mramiro.com.br'
