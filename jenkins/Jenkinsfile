@@ -12,7 +12,11 @@ pipeline {
             }
             steps {
                 echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
+                sh 'uname -a'
+                sh 'node --version'
+                sh 'npm --version'
                 sh 'npm ci'
+                sh 'ls -la'
             }
         }
     }
