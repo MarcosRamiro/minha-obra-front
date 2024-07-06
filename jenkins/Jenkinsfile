@@ -1,13 +1,21 @@
 pipeline {
-    agent none
+    agent any
+
+    environment { 
+        SERVER_TO_DEPLOY = 'mramiro.com.br'
+    }
+
     stages {
         stage('Install') {
             agent {
                 docker { image 'node:20.15.0-alpine3.20' }
             }
             steps {
+                echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
+            }
+            steps {
                 sh 'npm ci'
-                sh 'npm run build'
+                
             }
         }
     }
