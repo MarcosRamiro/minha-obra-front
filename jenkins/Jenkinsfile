@@ -6,13 +6,12 @@ pipeline {
     }
 
     stages {
-        stage('Install') {
+        stage('Build') {
             agent {
-                docker { image 'node:20.15.0-alpine3.20' }
+                docker { image 'node:20-alpine' }
             }
             steps {
                 echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
-                sh 'npm prune'
                 sh 'npm ci'
             }
         }
