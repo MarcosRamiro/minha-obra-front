@@ -6,14 +6,14 @@ pipeline {
     }
 
     stages {
-        agent {
+        
+        stage('Build') {
+            agent {
                 docker { 
                     image 'node:20-alpine'
                     args '-u root:root'
                 }
-        }
-        stage('Build') {
-            
+            }
             steps {
                 echo "Running ${env.BUILD_ID} on ${env.JENKINS_URL}"
                 sh 'uname -a'
