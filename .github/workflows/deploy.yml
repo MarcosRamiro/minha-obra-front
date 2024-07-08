@@ -40,7 +40,7 @@ jobs:
         with:
             SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
             ARGS: "-rlgoDzvc -i --delete"
-            SOURCE: "dist/minha-obra-front/browser/"
+            SOURCE: "dist/minha-obra-front/browser"
             REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
             REMOTE_USER: ${{ secrets.REMOTE_USER }}
             TARGET: ${{ vars.PATH_TO_DEPLOY }}
